@@ -49,8 +49,25 @@ The consuming project needs to provide:
 
 - A `@data/site` module resolvable from this package, exporting `url: string` and `prod(): boolean`
   — used for the "Production URL" link.
-- Tailwind CSS — the panel's static layout/spacing (padding, rounding, flex, etc.) is styled with
+- Tailwind CSS v4 — the panel's static layout/spacing (padding, rounding, flex, etc.) is styled with
   Tailwind utility classes.
+
+### Required: tell Tailwind to scan this package
+
+Tailwind v4 auto-detects class names across your project but **excludes `node_modules` by
+default**. Since this package's `.astro` components are installed into `node_modules`, Tailwind
+won't see their classes unless you opt this package in explicitly, via an
+[`@source`](https://tailwindcss.com/docs/detecting-classes-in-source-files#explicitly-registering-sources)
+directive in your main CSS file:
+
+```css
+@import "tailwindcss";
+@source "../../node_modules/@thenewdynamic/astro-debug-actions/src/**/*.astro";
+```
+
+Adjust the relative path to match where your CSS file lives relative to your project root. Skipping
+this step doesn't error — it just silently renders the panel with most of its styling (rounded
+corners, spacing, colors) missing.
 
 ## Options
 

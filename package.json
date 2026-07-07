@@ -1,6 +1,6 @@
 {
   "name": "@thenewdynamic/astro-debug-actions",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Astro integration for a dev-only debug panel with breakpoint visualization",
   "author": "The New Dynamic",

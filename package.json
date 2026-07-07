@@ -1,0 +1,50 @@
+{
+  "name": "@thenewdynamic/astro-debug-actions",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Astro integration for a dev-only debug panel with breakpoint visualization",
+  "author": "The New Dynamic",
+  "license": "MIT",
+  "homepage": "https://github.com/theNewDynamic/astro-debug-actions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theNewDynamic/astro-debug-actions.git"
+  },
+  "bugs": {
+    "url": "https://github.com/theNewDynamic/astro-debug-actions/issues"
+  },
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "debug",
+    "devtools",
+    "breakpoints"
+  ],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./components/*": "./src/components/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "astro": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  }
+}

@@ -1,0 +1,203 @@
+---
+import site from '@data/site';
+import DebugSection from "./DebugSection.astro";
+import DebugIcon from "../icons/debug.svg";
+import CheckIcon from "../icons/check.svg";
+import XmarkIcon from "../icons/xmark.svg";
+import LinkIcon from "../icons/link.svg";
+import astroPkg from 'astro/package.json';
+import config from 'virtual:tnd/debug-actions';
+const { entry: {url, id} } = Astro.props
+const { breakpoints } = config;
+
+const sortedBreakpoints = breakpoints ? [...breakpoints].sort((a, b) => a.minWidth - b.minWidth) : [];
+
+const colorStyles = sortedBreakpoints.map((bp) => {
+  const rules = `.debug-actions .handle{background-color:${bp.color};}`
+    + `.debug-actions .box{border-color:${bp.color};}`;
+  return bp.minWidth > 0 ? `@media (min-width: ${bp.minWidth}px){${rules}}` : rules;
+}).join('');
+
+const visibilityStyles = sortedBreakpoints.map((bp, i) => {
+  const next = sortedBreakpoints[i + 1];
+  const conditions = [`(min-width: ${bp.minWidth}px)`];
+  if (next) conditions.push(`(max-width: ${next.minWidth - 1}px)`);
+  return `@media ${conditions.join(' and ')}{.debug-actions .viewport-label[data-bp="${bp.name}"]{display:inline-block;}}`;
+}).join('');
+
+const breakpointStyles = breakpoints
+  ? `.debug-actions .viewport-label{display:none;}${colorStyles}${visibilityStyles}`
+  : '';
+---
+<style>
+  .debug-actions{
+    --w: 300px;
+    --border-width: 3px;
+    width: var(--w);
+    bottom: 6rem;
+    pointer-events: none;
+  }
+  .debug-actions{
+      left: 100%;
+      transition: transform 300ms ease-in-out;
+
+  }
+  .debug-actions .handle{
+    pointer-events: auto;
+    right: calc(var(--w) - var(--border-width));
+    bottom: 0;
+  }
+  .debug-actions .box{
+    pointer-events: none;
+    border-style: solid;
+    border-width: var(--border-width);
+    border-right-width: 0;
+  }
+  .debug-actions:hover .box, .debug-actions:focus-within .box, .debug-actions.is-open .box{
+    pointer-events: auto;
+  }
+  .debug-actions:hover, .debug-actions:focus-within, .debug-actions.is-open{
+    transform: translateX(-100%);
+  }
+  .debug-actions.force-closed{
+    transform: none !important;
+  }
+  .debug-actions .icon-open{
+    display: none;
+  }
+  .debug-actions.is-open .icon-closed{
+    display: none;
+  }
+  .debug-actions.is-open .icon-open{
+    display: inline;
+  }
+  @keyframes viewport-pop{
+    from{ transform: translateY(2px); opacity: 0.3; }
+    to{ transform: translateY(0); opacity: 1; }
+  }
+  .viewport-pop{
+    animation: viewport-pop 250ms ease-out;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .viewport-pop{
+      animation: none;
+    }
+  }
+</style>
+<style is:global set:html={breakpointStyles}></style>
+
+<div class="debug-actions fixed z-[1000] text-white">
+  <button type="button" class="absolute handle p-2 rounded-l-lg bg-black transition-colors" aria-label="Show debug actions"><DebugIcon fill="currentColor" width="1rem" /></button>
+  <div class="items-stretch bg-black rounded-tl-lg px-3 border-black box transition-colors">
+    <div class="py-1 border-b border-white">
+      <div class="text-lg">Debug Info</div>
+    </div>
+    <div class="gap-4 flex flex-col pb-1 pt-4">
+      <DebugSection title="Project">
+        {breakpoints && <div>
+          Breakpoint: {breakpoints.map((bp) => (
+            <span
+              class="viewport-pop viewport-label rounded px-2 py-0.5 text-xs font-medium text-white"
+              data-bp={bp.name}
+              style={{ backgroundColor: bp.color }}
+            >{bp.name} - ≥{bp.minWidth}px</span>
+          ))}
+        </div>}
+        <div>Astro: v{astroPkg.version}</div>
+        <slot name="project" />
+      </DebugSection>
+      <DebugSection title="Page">
+        <a target="_blank" class="w-fit font-bold text-emerald-400 underline underline-offset-4 hover:text-emerald-300" href={`${site.url}${!Astro.url.pathname.includes('preview') ? Astro.url.pathname : url}`}>Production URL</a>
+        {id && <div>
+          ID: {id}
+        </div>}
+        <slot name="page" />
+      </DebugSection>
+      <DebugSection title="Block">
+        <div class="flex items-center gap-2">
+          <div class="block-hover-info text-white/50">Hover a block…</div>
+          <button type="button" class="copy-block-url hidden shrink-0 cursor-pointer text-white/70 hover:text-white" aria-label="Copy block URL" title="Copy block URL">
+            <LinkIcon class="icon-copy" fill="currentColor" width="0.85rem" />
+            <CheckIcon class="icon-copied hidden" fill="currentColor" width="0.85rem" />
+          </button>
+        </div>
+        <slot name="block" />
+      </DebugSection>
+
+      <slot name="sections" />
+
+      <div class="flex items-center gap-2">
+        <button type="button" class="pin-toggle cursor-pointer inline-flex w-fit items-center gap-1.5 rounded-md bg-white/20 px-2 py-1 text-xs transition hover:bg-white/30">
+          <CheckIcon class="icon-closed" fill="currentColor" width="0.75rem" />
+          <XmarkIcon class="icon-open" fill="currentColor" width="0.75rem" />
+          <span class="label">Keep open</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.debug-actions .pin-toggle').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const panel = toggle.closest('.debug-actions');
+      if (!panel) return;
+      const isOpen = panel.classList.toggle('is-open');
+      const label = toggle.querySelector('.label');
+      if (label) label.textContent = isOpen ? 'Hide' : 'Keep open';
+
+      if (!isOpen) {
+        panel.classList.add('force-closed');
+        toggle.blur();
+        const clearForceClosed = (event: Event) => {
+          if (event.type === 'focusout' && panel.contains((event as FocusEvent).relatedTarget as Node)) return;
+          panel.classList.remove('force-closed');
+          panel.removeEventListener('mouseleave', clearForceClosed);
+          panel.removeEventListener('focusout', clearForceClosed);
+        };
+        panel.addEventListener('mouseleave', clearForceClosed);
+        panel.addEventListener('focusout', clearForceClosed);
+      }
+    });
+  });
+
+  document.querySelectorAll('.debug-actions .copy-block-url').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const blockId = (button as HTMLElement).dataset.blockId;
+      if (!blockId) return;
+      const url = `${location.origin}${location.pathname}#${blockId}`;
+      await navigator.clipboard.writeText(url);
+
+      button.querySelector('.icon-copy')?.classList.add('hidden');
+      button.querySelector('.icon-copied')?.classList.remove('hidden');
+      window.setTimeout(() => {
+        button.querySelector('.icon-copy')?.classList.remove('hidden');
+        button.querySelector('.icon-copied')?.classList.add('hidden');
+      }, 1200);
+    });
+  });
+
+  document.addEventListener('mouseover', (event: MouseEvent) => {
+    const panel = document.querySelector('.debug-actions');
+    const info = panel?.querySelector('.block-hover-info');
+    const copyButton = panel?.querySelector<HTMLElement>('.copy-block-url');
+    if (!panel?.classList.contains('is-open') || !info) return;
+    if ((event.target as HTMLElement).closest('.debug-actions')) return;
+
+    const blockEl = (event.target as HTMLElement).closest<HTMLElement>('[data-block-id]');
+    info.classList.toggle('text-white/50', !blockEl);
+    info.classList.toggle('text-white', !!blockEl);
+    if (!blockEl) {
+      info.textContent = 'Hover a block…';
+      copyButton?.classList.add('hidden');
+      if (copyButton) delete copyButton.dataset.blockId;
+      return;
+    }
+    const { blockId, blockComponent, blockTitle } = blockEl.dataset;
+    info.textContent = `${blockComponent || '?'}${blockTitle ? ` — ${blockTitle}` : ''} (#${blockId})`;
+    if (copyButton && blockId) {
+      copyButton.dataset.blockId = blockId;
+      copyButton.classList.remove('hidden');
+    }
+  });
+</script>

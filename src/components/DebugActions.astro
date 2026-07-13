@@ -12,22 +12,24 @@ const { breakpoints } = config;
 
 const sortedBreakpoints = breakpoints ? [...breakpoints].sort((a, b) => a.minWidth - b.minWidth) : [];
 
-const colorStyles = sortedBreakpoints.map((bp) => {
-  const rules = `.debug-actions .handle{background-color:${bp.color};}`
-    + `.debug-actions .box{border-color:${bp.color};}`;
-  return bp.minWidth > 0 ? `@media (min-width: ${bp.minWidth}px){${rules}}` : rules;
-}).join('');
-
-const visibilityStyles = sortedBreakpoints.map((bp, i) => {
+// Breakpoint colors are arbitrary per-project values, so these rules can't be written
+// statically. Astro's CSP hasher only covers literal <style> content, not set:html or
+// style="" attributes, so instead of emitting either we ship them as data and insert
+// them via the CSSOM at runtime (see the <script> below) — style-src doesn't restrict
+// CSSStyleSheet.insertRule().
+const breakpointRules = sortedBreakpoints.flatMap((bp, i) => {
   const next = sortedBreakpoints[i + 1];
-  const conditions = [`(min-width: ${bp.minWidth}px)`];
-  if (next) conditions.push(`(max-width: ${next.minWidth - 1}px)`);
-  return `@media ${conditions.join(' and ')}{.debug-actions .viewport-label[data-bp="${bp.name}"]{display:inline-block;}}`;
-}).join('');
-
-const breakpointStyles = breakpoints
-  ? `.debug-actions .viewport-label{display:none;}${colorStyles}${visibilityStyles}`
-  : '';
+  const colorDecl = `.debug-actions .handle{background-color:${bp.color};}`
+    + `.debug-actions .box{border-color:${bp.color};}`
+    + `.debug-actions .viewport-label[data-bp="${bp.name}"]{background-color:${bp.color};}`;
+  const visibilityConditions = [`(min-width: ${bp.minWidth}px)`];
+  if (next) visibilityConditions.push(`(max-width: ${next.minWidth - 1}px)`);
+  return [
+    bp.minWidth > 0 ? `@media (min-width: ${bp.minWidth}px){${colorDecl}}` : colorDecl,
+    `@media ${visibilityConditions.join(' and ')}{.debug-actions .viewport-label[data-bp="${bp.name}"]{display:inline-block;}}`,
+  ];
+});
+if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-label{display:none;}');
 ---
 <style>
   .debug-actions{
@@ -84,9 +86,9 @@ const breakpointStyles = breakpoints
     }
   }
 </style>
-<style is:global set:html={breakpointStyles}></style>
+<style id="debug-actions-breakpoint-styles"></style>
 
-<div class="debug-actions fixed z-[1000] text-white">
+<div class="debug-actions fixed z-[1000] text-white" data-breakpoint-rules={breakpointRules.length ? JSON.stringify(breakpointRules) : undefined}>
   <button type="button" class="absolute handle p-2 rounded-l-lg bg-black transition-colors" aria-label="Show debug actions"><DebugIcon fill="currentColor" width="1rem" /></button>
   <div class="items-stretch bg-black rounded-tl-lg px-3 border-black box transition-colors">
     <div class="py-1 border-b border-white">
@@ -99,7 +101,6 @@ const breakpointStyles = breakpoints
             <span
               class="viewport-pop viewport-label rounded px-2 py-0.5 text-xs font-medium text-white"
               data-bp={bp.name}
-              style={{ backgroundColor: bp.color }}
             >{bp.name} - ≥{bp.minWidth}px</span>
           ))}
         </div>}
@@ -138,6 +139,14 @@ const breakpointStyles = breakpoints
 </div>
 
 <script>
+  const debugActionsPanel = document.querySelector<HTMLElement>('.debug-actions');
+  const breakpointRulesRaw = debugActionsPanel?.dataset.breakpointRules;
+  const breakpointStylesheet = document.getElementById('debug-actions-breakpoint-styles') as HTMLStyleElement | null;
+  if (breakpointRulesRaw && breakpointStylesheet?.sheet) {
+    const sheet = breakpointStylesheet.sheet;
+    (JSON.parse(breakpointRulesRaw) as string[]).forEach((rule) => sheet.insertRule(rule, sheet.cssRules.length));
+  }
+
   document.querySelectorAll('.debug-actions .pin-toggle').forEach((toggle) => {
     toggle.addEventListener('click', () => {
       const panel = toggle.closest('.debug-actions');

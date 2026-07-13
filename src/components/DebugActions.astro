@@ -19,13 +19,15 @@ const sortedBreakpoints = breakpoints ? [...breakpoints].sort((a, b) => a.minWid
 // CSSStyleSheet.insertRule().
 const breakpointRules = sortedBreakpoints.flatMap((bp, i) => {
   const next = sortedBreakpoints[i + 1];
-  const colorDecl = `.debug-actions .handle{background-color:${bp.color};}`
-    + `.debug-actions .box{border-color:${bp.color};}`
-    + `.debug-actions .viewport-label[data-bp="${bp.name}"]{background-color:${bp.color};}`;
+  const colorRules = [
+    `.debug-actions .handle{background-color:${bp.color};}`,
+    `.debug-actions .box{border-color:${bp.color};}`,
+    `.debug-actions .viewport-label[data-bp="${bp.name}"]{background-color:${bp.color};}`,
+  ];
   const visibilityConditions = [`(min-width: ${bp.minWidth}px)`];
   if (next) visibilityConditions.push(`(max-width: ${next.minWidth - 1}px)`);
   return [
-    bp.minWidth > 0 ? `@media (min-width: ${bp.minWidth}px){${colorDecl}}` : colorDecl,
+    ...(bp.minWidth > 0 ? [`@media (min-width: ${bp.minWidth}px){${colorRules.join('')}}`] : colorRules),
     `@media ${visibilityConditions.join(' and ')}{.debug-actions .viewport-label[data-bp="${bp.name}"]{display:inline-block;}}`,
   ];
 });
@@ -86,7 +88,6 @@ if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-
     }
   }
 </style>
-<style id="debug-actions-breakpoint-styles"></style>
 
 <div class="debug-actions fixed z-[1000] text-white" data-breakpoint-rules={breakpointRules.length ? JSON.stringify(breakpointRules) : undefined}>
   <button type="button" class="absolute handle p-2 rounded-l-lg bg-black transition-colors" aria-label="Show debug actions"><DebugIcon fill="currentColor" width="1rem" /></button>
@@ -141,10 +142,13 @@ if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-
 <script>
   const debugActionsPanel = document.querySelector<HTMLElement>('.debug-actions');
   const breakpointRulesRaw = debugActionsPanel?.dataset.breakpointRules;
-  const breakpointStylesheet = document.getElementById('debug-actions-breakpoint-styles') as HTMLStyleElement | null;
-  if (breakpointRulesRaw && breakpointStylesheet?.sheet) {
+  if (breakpointRulesRaw) {
+    const breakpointStylesheet = document.createElement('style');
+    document.head.appendChild(breakpointStylesheet);
     const sheet = breakpointStylesheet.sheet;
-    (JSON.parse(breakpointRulesRaw) as string[]).forEach((rule) => sheet.insertRule(rule, sheet.cssRules.length));
+    if (sheet) {
+      (JSON.parse(breakpointRulesRaw) as string[]).forEach((rule) => sheet.insertRule(rule, sheet.cssRules.length));
+    }
   }
 
   document.querySelectorAll('.debug-actions .pin-toggle').forEach((toggle) => {

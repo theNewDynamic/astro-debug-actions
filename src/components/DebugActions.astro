@@ -8,16 +8,16 @@ import LinkIcon from "../icons/link.svg";
 import astroPkg from 'astro/package.json';
 import config from 'virtual:tnd/debug-actions';
 const { entry: {url, id} } = Astro.props
-const { breakpoints } = config;
+const { breakpoints, badges } = config;
 
 const sortedBreakpoints = breakpoints ? [...breakpoints].sort((a, b) => a.minWidth - b.minWidth) : [];
 
-// Breakpoint colors are arbitrary per-project values, so these rules can't be written
+// Breakpoint and badge colors are arbitrary per-project values, so these rules can't be written
 // statically. Astro's CSP hasher only covers literal <style> content, not set:html or
 // style="" attributes, so instead of emitting either we ship them as data and insert
 // them via the CSSOM at runtime (see the <script> below) — style-src doesn't restrict
 // CSSStyleSheet.insertRule().
-const breakpointRules = sortedBreakpoints.flatMap((bp, i) => {
+const dynamicRules = sortedBreakpoints.flatMap((bp, i) => {
   const next = sortedBreakpoints[i + 1];
   const colorRules = [
     `.debug-actions .handle{background-color:${bp.color};}`,
@@ -31,7 +31,12 @@ const breakpointRules = sortedBreakpoints.flatMap((bp, i) => {
     `@media ${visibilityConditions.join(' and ')}{.debug-actions .viewport-label[data-bp="${bp.name}"]{display:inline-block;}}`,
   ];
 });
-if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-label{display:none;}');
+if (sortedBreakpoints.length) dynamicRules.unshift('.debug-actions .viewport-label{display:none;}');
+if (badges) {
+  badges.forEach((b, i) => {
+    if (b.color) dynamicRules.push(`.debug-actions .badge[data-badge-index="${i}"]{background-color:${b.color};}`);
+  });
+}
 ---
 <style>
   .debug-actions{
@@ -46,7 +51,7 @@ if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-
       transition: transform 300ms ease-in-out;
 
   }
-  .debug-actions .handle{
+  .debug-actions .handle-group{
     pointer-events: auto;
     right: calc(var(--w) - var(--border-width));
     bottom: 0;
@@ -89,8 +94,15 @@ if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-
   }
 </style>
 
-<div class="debug-actions fixed z-[1000] text-white" data-breakpoint-rules={breakpointRules.length ? JSON.stringify(breakpointRules) : undefined}>
-  <button type="button" class="absolute handle p-2 rounded-l-lg bg-black transition-colors" aria-label="Show debug actions"><DebugIcon fill="currentColor" width="1rem" /></button>
+<div class="debug-actions fixed z-[1000] text-white" data-dynamic-rules={dynamicRules.length ? JSON.stringify(dynamicRules) : undefined}>
+  <div class="absolute handle-group flex flex-col items-end gap-[var(--border-width)]">
+    {badges && badges.map((b, i) => (
+      <div class="badge bg-black rounded-l-lg pl-2 pr-1 py-1 text-center text-xs font-medium whitespace-nowrap text-white mr-[var(--border-width)]" data-badge-index={i} aria-hidden="true">{b.value}</div>
+    ))}
+    <button type="button" class="handle flex items-center justify-center p-2 rounded-l-lg bg-black transition-colors" aria-label="Show debug actions">
+      <DebugIcon fill="currentColor" width="1rem" />
+    </button>
+  </div>
   <div class="items-stretch bg-black rounded-tl-lg px-3 border-black box transition-colors">
     <div class="py-1 border-b border-white">
       <div class="text-lg">Debug Info</div>
@@ -105,6 +117,11 @@ if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-
             >{bp.name} - ≥{bp.minWidth}px</span>
           ))}
         </div>}
+        {badges && badges.map((b, i) => (
+          <div>
+            {b.label}: <span class="badge bg-black viewport-pop rounded px-2 py-0.5 text-xs font-medium text-white" data-badge-index={i}>{b.value}</span>
+          </div>
+        ))}
         <div>Astro: v{astroPkg.version}</div>
         <slot name="project" />
       </DebugSection>
@@ -141,13 +158,13 @@ if (sortedBreakpoints.length) breakpointRules.unshift('.debug-actions .viewport-
 
 <script>
   const debugActionsPanel = document.querySelector<HTMLElement>('.debug-actions');
-  const breakpointRulesRaw = debugActionsPanel?.dataset.breakpointRules;
-  if (breakpointRulesRaw) {
-    const breakpointStylesheet = document.createElement('style');
-    document.head.appendChild(breakpointStylesheet);
-    const sheet = breakpointStylesheet.sheet;
+  const dynamicRulesRaw = debugActionsPanel?.dataset.dynamicRules;
+  if (dynamicRulesRaw) {
+    const dynamicStylesheet = document.createElement('style');
+    document.head.appendChild(dynamicStylesheet);
+    const sheet = dynamicStylesheet.sheet;
     if (sheet) {
-      (JSON.parse(breakpointRulesRaw) as string[]).forEach((rule) => sheet.insertRule(rule, sheet.cssRules.length));
+      (JSON.parse(dynamicRulesRaw) as string[]).forEach((rule) => sheet.insertRule(rule, sheet.cssRules.length));
     }
   }
 

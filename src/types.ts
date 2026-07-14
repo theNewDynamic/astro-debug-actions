@@ -9,3 +9,18 @@ export interface Breakpoint {
    */
   color: string;
 }
+
+export interface Badge {
+  /**
+   * Label shown before the value in the Project section, e.g. "Dataset".
+   */
+  label: string;
+  /**
+   * Text shown on the handle tab (closed) and next to the label in the Project section (open).
+   */
+  value: string;
+  /**
+   * CSS color applied to the tab/pill background. Defaults to black if omitted.
+   */
+  color?: string;
+}

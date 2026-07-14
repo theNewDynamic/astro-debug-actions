@@ -1,0 +1,22 @@
+---
+import DebugActions from '@thenewdynamic/astro-debug-actions/components/DebugActions.astro';
+import '../styles/global.css';
+
+const entry = { url: '/', id: 'home' };
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>astro-debug-actions playground</title>
+  </head>
+  <body>
+    <main class="p-8">
+      <h1 class="text-2xl font-bold">astro-debug-actions playground</h1>
+      <p class="mt-2">Resize the window to see the breakpoint colors change, and hover a block below.</p>
+      <div class="mt-8" data-block-id="hero-1" data-block-component="Hero" data-block-title="Welcome block">
+        <p>This is a block the panel can hover-inspect.</p>
+      </div>
+    </main>
+    <DebugActions entry={entry} />
+  </body>
+</html>

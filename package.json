@@ -24,6 +24,9 @@
     "dist",
     "src"
   ],
+  "workspaces": [
+    "playground"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -37,7 +40,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "playground": "npm run dev --workspace=playground"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -1,7 +1,7 @@
 import type { AstroIntegration } from 'astro';
-import type { Breakpoint } from './types.js';
+import type { Badge, Breakpoint } from './types.js';
 
-export type { Breakpoint };
+export type { Badge, Breakpoint };
 
 export interface DebugActionsOptions {
   /**
@@ -9,10 +9,17 @@ export interface DebugActionsOptions {
    * the breakpoint visualization (viewport label, handle/box coloring) entirely.
    */
   breakpoints?: Breakpoint[] | false;
+  /**
+   * Arbitrary label/value/color rows shown as stacked tabs on the closed handle, and as rows in
+   * the Project section — e.g. a Sanity dataset, environment name, or tenant. Omit (or pass
+   * `false`) to disable. Each badge's `color` is optional and defaults to black.
+   */
+  badges?: Badge[] | false;
 }
 
 export interface DebugActionsConfig {
   breakpoints: Breakpoint[] | false;
+  badges: Badge[] | false;
 }
 
 export const defaultBreakpoints: Breakpoint[] = [
@@ -38,6 +45,7 @@ declare module 'virtual:tnd/debug-actions' {
 export default function debugActions(options: DebugActionsOptions = {}): AstroIntegration {
   const config: DebugActionsConfig = {
     breakpoints: options.breakpoints === false ? false : options.breakpoints ?? defaultBreakpoints,
+    badges: options.badges ?? false,
   };
 
   return {

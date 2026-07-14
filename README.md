@@ -74,6 +74,7 @@ corners, spacing, colors) missing.
 ```ts
 debugActions({
   breakpoints: [...], // Breakpoint[] | false — default: defaultBreakpoints
+  badges: [...],      // Badge[] | false — default: false
 });
 ```
 
@@ -118,6 +119,32 @@ debugActions({ breakpoints: false });
 ```
 
 No "Breakpoint" row is rendered, and the handle/box fall back to solid black.
+
+### `badges`
+
+Arbitrary label/value pairs shown as stacked tabs above the handle — so they're visible without
+opening the panel — and repeated as rows in the Project section once open. Use them for whatever
+varies per project and is useful to spot at a glance: a Sanity dataset, an environment name, a
+tenant, etc. Pass as many as you want.
+
+```ts
+interface Badge {
+  label: string;  // shown before the value in the Project section, e.g. "Dataset"
+  value: string;  // shown on the tab and next to the label in the Project section
+  color?: string; // any valid CSS color — defaults to black if omitted
+}
+```
+
+```ts
+debugActions({
+  badges: [
+    { label: 'Dataset', value: 'staging', color: '#f59e0b' },
+    { label: 'Tenant', value: 'acme' }, // no color → renders black
+  ],
+});
+```
+
+Omit the option (or pass `false`) to disable it — the default.
 
 ## Extending the panel (slots)
 
@@ -177,3 +204,17 @@ copies `<current-page-url>#<block-id>` to the clipboard.
 npm run build   # tsc one-off build
 npm run dev     # tsc --watch
 ```
+
+### Playground
+
+`playground/` is a minimal Astro app (an npm workspace) that depends on this package via
+`file:..`, so it always resolves to your local source — no `npm link`/`yalc` needed. Run it with:
+
+```sh
+npm run playground   # from the repo root — starts `astro dev` inside playground/
+```
+
+Keep `npm run dev` (tsc --watch) running alongside it: `.astro` component edits hot-reload
+instantly, but changes to `index.ts` (integration options) are only picked up once `tsc` rebuilds
+`dist/index.js`, and — regardless of build/link method — Astro integrations are only re-evaluated
+on server restart, so you'll need to restart `npm run playground` after changing `index.ts`.

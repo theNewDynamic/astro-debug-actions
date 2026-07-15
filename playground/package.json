@@ -1,0 +1,16 @@
+{
+  "name": "astro-debug-actions-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.2",
+    "@thenewdynamic/astro-debug-actions": "file:..",
+    "astro": "^5.18.2",
+    "tailwindcss": "^4.3.2"
+  }
+}

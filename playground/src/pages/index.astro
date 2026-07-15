@@ -3,6 +3,11 @@ import DebugActions from '@thenewdynamic/astro-debug-actions/components/DebugAct
 import '../styles/global.css';
 
 const entry = { url: '/', id: 'home' };
+const badges = [
+  { label: 'Dataset', value: 'staging', color: '#f59e0b' },
+  { label: 'Env', value: 'prod', color: '#22c55e' },
+  { label: 'Tenant', value: 'acme' },
+];
 ---
 <html lang="en">
   <head>
@@ -17,6 +22,6 @@ const entry = { url: '/', id: 'home' };
         <p>This is a block the panel can hover-inspect.</p>
       </div>
     </main>
-    <DebugActions entry={entry} />
+    <DebugActions entry={entry} badges={badges} />
   </body>
 </html>

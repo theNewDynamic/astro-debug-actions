@@ -39,9 +39,10 @@ The component does not gate its own visibility — render it only where appropri
 
 #### Props
 
-| Prop    | Type                            | Required | Notes                                                                                   |
-| ------- | -------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
-| `entry` | `{ url: string; id?: string }`   | Yes      | `url` powers the "Production URL" link in the Page section; `id`, if present, is shown alongside it. |
+| Prop     | Type                            | Required | Notes                                                                                   |
+| -------- | -------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `entry`  | `{ url: string; id?: string }`   | Yes      | `url` powers the "Production URL" link in the Page section; `id`, if present, is shown alongside it. |
+| `badges` | `Badge[] \| false`                | No       | Passed as a prop rather than an integration option — see [`badges`](#badges) below.       |
 
 ## Requirements
 
@@ -74,7 +75,6 @@ corners, spacing, colors) missing.
 ```ts
 debugActions({
   breakpoints: [...], // Breakpoint[] | false — default: defaultBreakpoints
-  badges: [...],      // Badge[] | false — default: false
 });
 ```
 
@@ -127,6 +127,10 @@ opening the panel — and repeated as rows in the Project section once open. Use
 varies per project and is useful to spot at a glance: a Sanity dataset, an environment name, a
 tenant, etc. Pass as many as you want.
 
+Unlike `breakpoints`, this is a **component prop**, not an integration option — badge values
+typically come from request-scoped runtime env (e.g. Cloudflare bindings, `Astro.locals`) that
+isn't available yet when `astro.config.mjs` is evaluated.
+
 ```ts
 interface Badge {
   label: string;  // shown before the value in the Project section, e.g. "Dataset"
@@ -135,16 +139,17 @@ interface Badge {
 }
 ```
 
-```ts
-debugActions({
-  badges: [
-    { label: 'Dataset', value: 'staging', color: '#f59e0b' },
-    { label: 'Tenant', value: 'acme' }, // no color → renders black
-  ],
-});
+```astro
+---
+const badges = [
+  { label: 'Dataset', value: 'staging', color: '#f59e0b' },
+  { label: 'Tenant', value: 'acme' }, // no color → renders black
+];
+---
+<DebugActions entry={entry} badges={badges} />
 ```
 
-Omit the option (or pass `false`) to disable it — the default.
+Omit the prop (or pass `false`) to disable it — the default.
 
 ## Extending the panel (slots)
 

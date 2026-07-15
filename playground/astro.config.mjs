@@ -7,11 +7,6 @@ export default defineConfig({
   integrations: [
     debugActions({
       breakpoints: defaultBreakpoints,
-      badges: [
-        { label: 'Dataset', value: 'staging', color: '#f59e0b' },
-        { label: 'Env', value: 'prod', color: '#22c55e' },
-        { label: 'Tenant', value: 'acme' },
-      ],
     }),
   ],
   vite: {

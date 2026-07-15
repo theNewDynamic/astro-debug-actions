@@ -7,8 +7,22 @@ import XmarkIcon from "../icons/xmark.svg";
 import LinkIcon from "../icons/link.svg";
 import astroPkg from 'astro/package.json';
 import config from 'virtual:tnd/debug-actions';
-const { entry: {url, id} } = Astro.props
-const { breakpoints, badges } = config;
+import type { Badge } from '../types.js';
+
+interface Props {
+  entry: { url: string; id?: string };
+  /**
+   * Arbitrary label/value/color rows shown as stacked tabs on the closed handle, and as rows in
+   * the Project section — e.g. a Sanity dataset, environment name, or tenant. Passed as a prop
+   * (rather than an integration option) since these values often come from request-scoped
+   * runtime env (e.g. Cloudflare bindings), unavailable when astro.config.mjs is evaluated.
+   * Omit (or pass `false`) to disable. Each badge's `color` is optional and defaults to black.
+   */
+  badges?: Badge[] | false;
+}
+
+const { entry: {url, id}, badges = false } = Astro.props as Props;
+const { breakpoints } = config;
 
 const sortedBreakpoints = breakpoints ? [...breakpoints].sort((a, b) => a.minWidth - b.minWidth) : [];
 

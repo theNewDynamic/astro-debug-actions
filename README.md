@@ -75,8 +75,29 @@ corners, spacing, colors) missing.
 ```ts
 debugActions({
   breakpoints: [...], // Breakpoint[] | false — default: defaultBreakpoints
+  position: {...},    // Position — default: { side: 'right', bottom: '6rem' }
 });
 ```
+
+### `position`
+
+Where the panel docks, useful when it collides with a project's own fixed UI (a back-to-top
+button, a chat widget, etc.).
+
+```ts
+interface Position {
+  side?: 'left' | 'right';  // viewport edge the panel slides out from — default 'right'
+  bottom?: number | string; // distance from the viewport bottom; number = px, string = any CSS length — default '6rem'
+}
+```
+
+```js
+debugActions({ position: { side: 'left', bottom: 200 } });
+```
+
+`bottom` is a per-project value, so like breakpoint colors it is applied through the CSSOM at
+runtime (see [Styling](#styling)): the panel sits at the default offset until the component's
+script runs.
 
 ### `Breakpoint` shape
 

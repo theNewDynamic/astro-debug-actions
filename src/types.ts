@@ -24,3 +24,15 @@ export interface Badge {
    */
   color?: string;
 }
+
+export interface Position {
+  /**
+   * Viewport edge the panel is docked to. Defaults to `right`.
+   */
+  side?: 'left' | 'right';
+  /**
+   * Distance between the bottom of the viewport and the handle. A number is read as px, a string
+   * as any CSS length (e.g. `"6rem"`, `"10vh"`). Defaults to `"6rem"`.
+   */
+  bottom?: number | string;
+}

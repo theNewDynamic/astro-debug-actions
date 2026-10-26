@@ -22,7 +22,8 @@ interface Props {
 }
 
 const { entry: {url, id}, badges = false } = Astro.props as Props;
-const { breakpoints } = config;
+const { breakpoints, position } = config;
+const isLeft = position.side === 'left';
 
 const sortedBreakpoints = breakpoints ? [...breakpoints].sort((a, b) => a.minWidth - b.minWidth) : [];
 
@@ -46,6 +47,7 @@ const dynamicRules = sortedBreakpoints.flatMap((bp, i) => {
   ];
 });
 if (sortedBreakpoints.length) dynamicRules.unshift('.debug-actions .viewport-label{display:none;}');
+dynamicRules.unshift(`.debug-actions{--debug-actions-bottom:${typeof position.bottom === 'number' ? `${position.bottom}px` : position.bottom};}`);
 if (badges) {
   badges.forEach((b, i) => {
     if (b.color) dynamicRules.push(`.debug-actions .badge[data-badge-index="${i}"]{background-color:${b.color};}`);
@@ -57,7 +59,7 @@ if (badges) {
     --w: 300px;
     --border-width: 3px;
     width: var(--w);
-    bottom: 6rem;
+    bottom: var(--debug-actions-bottom, 6rem);
     pointer-events: none;
   }
   .debug-actions{
@@ -65,10 +67,18 @@ if (badges) {
       transition: transform 300ms ease-in-out;
 
   }
+  .debug-actions[data-side="left"]{
+    left: auto;
+    right: 100%;
+  }
   .debug-actions .handle-group{
     pointer-events: auto;
     right: calc(var(--w) - var(--border-width));
     bottom: 0;
+  }
+  .debug-actions[data-side="left"] .handle-group{
+    right: auto;
+    left: calc(var(--w) - var(--border-width));
   }
   .debug-actions .box{
     pointer-events: none;
@@ -76,11 +86,18 @@ if (badges) {
     border-width: var(--border-width);
     border-right-width: 0;
   }
+  .debug-actions[data-side="left"] .box{
+    border-right-width: var(--border-width);
+    border-left-width: 0;
+  }
   .debug-actions:hover .box, .debug-actions:focus-within .box, .debug-actions.is-open .box{
     pointer-events: auto;
   }
   .debug-actions:hover, .debug-actions:focus-within, .debug-actions.is-open{
     transform: translateX(-100%);
+  }
+  .debug-actions[data-side="left"]:hover, .debug-actions[data-side="left"]:focus-within, .debug-actions[data-side="left"].is-open{
+    transform: translateX(100%);
   }
   .debug-actions.force-closed{
     transform: none !important;
@@ -108,16 +125,16 @@ if (badges) {
   }
 </style>
 
-<div class="debug-actions fixed z-[1000] text-white" data-dynamic-rules={dynamicRules.length ? JSON.stringify(dynamicRules) : undefined}>
-  <div class="absolute handle-group flex flex-col items-end gap-[var(--border-width)]">
+<div class="debug-actions fixed z-[1000] text-white" data-side={position.side} data-dynamic-rules={dynamicRules.length ? JSON.stringify(dynamicRules) : undefined}>
+  <div class:list={["absolute handle-group flex flex-col gap-[var(--border-width)]", isLeft ? "items-start" : "items-end"]}>
     {badges && badges.map((b, i) => (
-      <div class="badge bg-black rounded-l-lg pl-2 pr-1 py-1 text-center text-xs font-medium whitespace-nowrap text-white mr-[var(--border-width)]" data-badge-index={i} aria-hidden="true">{b.value}</div>
+      <div class:list={["badge bg-black py-1 text-center text-xs font-medium whitespace-nowrap text-white", isLeft ? "rounded-r-lg pr-2 pl-1 ml-[var(--border-width)]" : "rounded-l-lg pl-2 pr-1 mr-[var(--border-width)]"]} data-badge-index={i} aria-hidden="true">{b.value}</div>
     ))}
-    <button type="button" class="handle flex items-center justify-center p-2 rounded-l-lg bg-black transition-colors" aria-label="Show debug actions">
+    <button type="button" class:list={["handle flex items-center justify-center p-2 bg-black transition-colors", isLeft ? "rounded-r-lg" : "rounded-l-lg"]} aria-label="Show debug actions">
       <DebugIcon fill="currentColor" width="1rem" />
     </button>
   </div>
-  <div class="items-stretch bg-black rounded-tl-lg px-3 border-black box transition-colors">
+  <div class:list={["items-stretch bg-black px-3 border-black box transition-colors", isLeft ? "rounded-tr-lg" : "rounded-tl-lg"]}>
     <div class="py-1 border-b border-white">
       <div class="text-lg">Debug Info</div>
     </div>

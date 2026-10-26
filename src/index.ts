@@ -1,7 +1,7 @@
 import type { AstroIntegration } from 'astro';
-import type { Badge, Breakpoint } from './types.js';
+import type { Badge, Breakpoint, Position } from './types.js';
 
-export type { Badge, Breakpoint };
+export type { Badge, Breakpoint, Position };
 
 export interface DebugActionsOptions {
   /**
@@ -9,10 +9,15 @@ export interface DebugActionsOptions {
    * the breakpoint visualization (viewport label, handle/box coloring) entirely.
    */
   breakpoints?: Breakpoint[] | false;
+  /**
+   * Where the panel is docked: which viewport edge, and how far from the bottom.
+   */
+  position?: Position;
 }
 
 export interface DebugActionsConfig {
   breakpoints: Breakpoint[] | false;
+  position: Required<Position>;
 }
 
 export const defaultBreakpoints: Breakpoint[] = [
@@ -38,6 +43,10 @@ declare module 'virtual:tnd/debug-actions' {
 export default function debugActions(options: DebugActionsOptions = {}): AstroIntegration {
   const config: DebugActionsConfig = {
     breakpoints: options.breakpoints === false ? false : options.breakpoints ?? defaultBreakpoints,
+    position: {
+      side: options.position?.side ?? 'right',
+      bottom: options.position?.bottom ?? '6rem',
+    },
   };
 
   return {
